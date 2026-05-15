@@ -17,7 +17,6 @@
         android:textColor="#00E5FF"
         android:textSize="32sp"
         android:textStyle="bold"
-        android:letterSpacing="0.08"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="30dp" />
 
@@ -28,7 +27,6 @@
         android:text="Hyper Local Safety Network"
         android:textColor="#B0BEC5"
         android:textSize="17sp"
-        android:textStyle="italic"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="10dp" />
 
@@ -37,7 +35,6 @@
         android:layout_width="220dp"
         android:layout_height="220dp"
         android:text="SOS"
-        android:textAllCaps="false"
         android:textSize="42sp"
         android:textStyle="bold"
         android:textColor="#FFFFFF"
