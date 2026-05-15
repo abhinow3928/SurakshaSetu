@@ -1,31 +1,43 @@
 package com.example.myapplication;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.pm.PackageManager;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.telephony.SmsManager;
 import android.widget.Button;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements SensorEventListener {
+
+    private SensorManager sensorManager;
+    private Sensor accelerometer;
+
+    private float acceleration;
+    private float currentAcceleration;
+    private float lastAcceleration;
 
     Button sosButton;
 
-    String phoneNumber = "9309239307"; // Replace with family number
+    String phoneNumber = "9876543210";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         sosButton = findViewById(R.id.btnSOS);
 
-        // Request SMS Permission
+        // SMS Permission
         if (ContextCompat.checkSelfPermission(this,
                 Manifest.permission.SEND_SMS)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -35,20 +47,87 @@ public class MainActivity extends AppCompatActivity {
                     100);
         }
 
-        sosButton.setOnClickListener(view -> sendSOSMessage());
+        // Button Click
+        sosButton.setOnClickListener(v -> sendSOS());
+
+        // Shake Detection Setup
+        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+
+        if (sensorManager != null) {
+            accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        }
+
+        acceleration = 10f;
+        currentAcceleration = SensorManager.GRAVITY_EARTH;
+        lastAcceleration = SensorManager.GRAVITY_EARTH;
     }
 
-    private void sendSOSMessage() {
+    @Override
+    protected void onResume() {
+        super.onResume();
 
-        String message = "Emergency! I need help. Please contact me immediately.";
+        if (accelerometer != null) {
+            sensorManager.registerListener(this,
+                    accelerometer,
+                    SensorManager.SENSOR_DELAY_NORMAL);
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        sensorManager.unregisterListener(this);
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+
+        float x = event.values[0];
+        float y = event.values[1];
+        float z = event.values[2];
+
+        lastAcceleration = currentAcceleration;
+
+        currentAcceleration = (float) Math.sqrt(
+                (double) (x * x + y * y + z * z)
+        );
+
+        float delta = currentAcceleration - lastAcceleration;
+
+        acceleration = acceleration * 0.9f + delta;
+
+        // SHAKE DETECTED
+        if (acceleration > 12) {
+
+            Toast.makeText(this,
+                    "Shake Detected!",
+                    Toast.LENGTH_SHORT).show();
+
+            sendSOS();
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+    }
+
+    private void sendSOS() {
+
+        String message = "Emergency! I need help immediately.";
 
         try {
+
             SmsManager smsManager = SmsManager.getDefault();
-            smsManager.sendTextMessage(phoneNumber,
+
+            smsManager.sendTextMessage(
+                    phoneNumber,
                     null,
                     message,
                     null,
-                    null);
+                    null
+            );
 
             Toast.makeText(this,
                     "SOS Message Sent!",
@@ -59,30 +138,6 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this,
                     "Failed to send message",
                     Toast.LENGTH_LONG).show();
-
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-
-        super.onRequestPermissionsResult(requestCode,
-                permissions,
-                grantResults);
-
-        if (requestCode == 100) {
-
-            if (!(grantResults.length > 0
-                    && grantResults[0]
-                    == PackageManager.PERMISSION_GRANTED)) {
-
-                Toast.makeText(this,
-                        "SMS Permission Denied",
-                        Toast.LENGTH_LONG).show();
-            }
         }
     }
 }
