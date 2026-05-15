@@ -1,0 +1,8 @@
+<resources>
+
+    <color name="background">#07111F</color>
+    <color name="title">#00E5FF</color>
+    <color name="sos_red">#FF1744</color>
+    <color name="green">#00E676</color>
+
+</resources>
